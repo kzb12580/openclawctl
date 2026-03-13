@@ -74,7 +74,7 @@ function Show-Menu {
                 Write-Host ("  $Header".PadRight($w - 1)) -ForegroundColor DarkCyan
                 $row++
                 [Console]::SetCursorPosition(0, $row)
-                Write-Host ('  ↑↓ 移动 · Enter 确认 · q 退出'.PadRight($w - 1)) -ForegroundColor DarkGray
+                Write-Host ('  Up/Down move, Enter confirm, q quit'.PadRight($w - 1)) -ForegroundColor DarkGray
                 $row++
             }
 
@@ -1698,14 +1698,23 @@ $marker
 function oc {
     `$d = Join-Path `$env:USERPROFILE '.openclawctl'
     `$s = Join-Path `$d 'openclaw.ps1'
-    try { (New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/byJoey/openclawctl/main/openclaw.ps1', `$s) } catch {}
-    if (Test-Path `$s) { & `$s } else { Write-Host 'oc: 脚本下载失败' -ForegroundColor Red }
+    try {
+        `$utf8 = [System.Text.UTF8Encoding]::new(`$true)
+        `$content = (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/byJoey/openclawctl/main/openclaw.ps1')
+        [System.IO.File]::WriteAllText(`$s, `$content, `$utf8)
+    } catch {}
+    if (Test-Path `$s) { & `$s } else { Write-Host 'oc: script download failed' -ForegroundColor Red }
 }
 "@
-        Add-Content -Path $profilePath -Value $block -Encoding UTF8
+        $utf8Bom = New-Object System.Text.UTF8Encoding $true
+        [System.IO.File]::AppendAllText($profilePath, $block, $utf8Bom)
     }
 
-    try { (New-Object Net.WebClient).DownloadFile($scriptUrl, $localScript) } catch {}
+    try {
+        $content = (New-Object Net.WebClient).DownloadString($scriptUrl)
+        $utf8Bom = New-Object System.Text.UTF8Encoding $true
+        [System.IO.File]::WriteAllText($localScript, $content, $utf8Bom)
+    } catch {}
 }
 
 Install-Shortcut
